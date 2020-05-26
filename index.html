@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Displaying road collision data in the UK</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Displaying road collision data in the UK">
+  <meta name="author" content="Martin Baierl">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  
+  <hgroup class="auto-fadein">
+    <h1>Displaying road collision data in the UK</h1>
+    <h2>26/05/2020</h2>
+    <p>Martin Baierl<br/></p>
+  </hgroup>
+  
+  <article></article>  
+  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  
+  <article data-timings="">
+    <style>
+.title-slide {
+  background-color: #FFFFFF; /* #EDE0CF; ; #CA9F9D*/
+code.r{
+  font-size: 10px;
+}
+</style>
+
+<h2>Displaying road collision data in the UK</h2>
+
+<p><br /> 
+<a href="https://mbcmn.shinyapps.io/assignment">https://mbcmn.shinyapps.io/assignment</a><br>
+<br /> </p>
+
+<p>This shiny app displays road collisions in the UK as recorded in the STATS19 dataset provided by the Department for Transport.<br /><br>
+Road collision data is vital for transport planning and road safety work, but the raw data is provided in a not very accessible way.<br /><br>
+This app allows to quickly display road collision data for a selected area of interest.<br /></p>
+
+  </article>
+  <!-- Presenter Notes -->
+  
+</slide>
+
+<slide class="" id="slide-2" style="background:;">
+  
+  <hgroup>
+    <h2>What the app does</h2>
+  </hgroup>
+  
+  <article data-timings="">
+    <p>The user selects the following from the sidebar boxes:</p>
+
+<ul>
+<li>Year (2015 - 2018)</li>
+<li>Accident severity: Fatal/Serious/Slight</li>
+<li>Local authority (the area of interest)</li>
+</ul>
+
+<p>Then, the app queries the accident data, filters according to the user input and displays the data on a map using leaflet. The code deployed in the app is shown on the next slide, with added reactive event wrappers, UI and dynamic inputs instead of hard-coded values.</p>
+
+<p>Leaflet is then used to display the accident data on a map, with popups providing the following, additional information on the road collision, such as:  </p>
+
+<p>Accident severity / Date / Vehicles involved /  Number of casualties / Speed limit on the road</p>
+
+  </article>
+  <!-- Presenter Notes -->
+  
+</slide>
+
+<slide class="" id="slide-3" style="background:;">
+  
+  <hgroup>
+    <h2>The code</h2>
+  </hgroup>
+  
+  <article data-timings="">
+    <pre><code class="r">crashes &lt;- get_stats19(year = 2017, type = &quot;Accidents&quot;, ask = FALSE) %&gt;%
+  filter(local_authority_district == &#39;Birmingham&#39;) %&gt;%
+  filter(accident_severity %in% c(&quot;Serious&quot;)) %&gt;%
+  filter((longitude != is.na(longitude)) &amp; (latitude != is.na(latitude))) %&gt;%
+  mutate(accident_severity = factor(accident_severity))
+
+crash_map &lt;- leaflet() %&gt;%
+  addTiles() %&gt;%
+  addCircleMarkers(data = crashes, clusterOptions = markerClusterOptions(),
+                   lng = ~longitude, lat = ~latitude,
+                   popup = paste(&quot;&lt;b&gt;&quot;, crashes$accident_index,&quot;&lt;/b&gt;&quot;,&quot;&lt;br&gt;&quot;,
+                                 &quot;Severity:&quot;, crashes$accident_severity, &quot;&lt;br&gt;&quot;,
+                                 &quot;Date:&quot;, crashes$date, &quot;&lt;br&gt;&quot;,
+                                 &quot;Vehicles involved:&quot;, crashes$number_of_vehicles,&quot;&lt;br&gt;&quot;,
+                                 &quot;Number of casualties:&quot;, crashes$number_of_casualties,&quot;&lt;br&gt;&quot;,
+                                 &quot;Speed limit:&quot;, crashes$speed_limit,&quot;mph&quot;,&quot;&lt;br&gt;&quot;),
+                   )
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+  
+</slide>
+
+<slide class="" id="slide-4" style="background:;">
+  
+  <hgroup>
+    <h2>What the user gets:</h2>
+  </hgroup>
+  
+  <article data-timings="">
+    <p><img src="assets/fig/unnamed-chunk-4-1.png" title="plot of chunk unnamed-chunk-4" alt="plot of chunk unnamed-chunk-4" style="display: block; margin: auto auto auto 0;" /></p>
+
+  </article>
+  <!-- Presenter Notes -->
+  
+</slide>
+
+<slide class="" id="slide-5" style="background:;">
+  
+  <hgroup>
+    <h2>Stats19 package</h2>
+  </hgroup>
+  
+  <article data-timings="">
+    <p>Besides shiny, leaflet and dplyr, the app makes use of the Stats19 package, developed to download, display and process official road collision data for the UK in an easier and more efficient way in R. For more information, please read the vignette:<br>
+<a href="https://cran.r-project.org/web/packages/stats19/vignettes/stats19.html">https://cran.r-project.org/web/packages/stats19/vignettes/stats19.html</a>
+<br />
+<br /><br>
+<br />  </p>
+
+<h2>Thank you</h2>
+
+  </article>
+  <!-- Presenter Notes -->
+  
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='NA'>
+         1
+      </a>
+    </li>
+    
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='What the app does'>
+         2
+      </a>
+    </li>
+    
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='The code'>
+         3
+      </a>
+    </li>
+    
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='What the user gets:'>
+         4
+      </a>
+    </li>
+    
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=5 title='Stats19 package'>
+         5
+      </a>
+    </li>
+    
+    </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+   
+  </html>
